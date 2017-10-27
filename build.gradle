@@ -1,0 +1,67 @@
+/*
+ * Copyright (C) 2010 The UAPI Authors
+ * You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at the LICENSE file.
+ *
+ * You must gained the permission from the authors if you want to
+ * use the project into a commercial product
+ */
+
+ext.project_version = getProjectVersion()
+
+allprojects {
+    buildscript {
+        repositories {
+            mavenLocal()
+            mavenCentral()
+            jcenter()
+            maven {
+                url "https://plugins.gradle.org/m2/"
+            }
+        }
+
+        dependencies {
+            classpath "gradle.plugin.org.gradle.java:experimental-jigsaw:0.1.1"
+        }
+    }
+
+    repositories {
+        mavenCentral()
+        jcenter()
+        maven { url "http://dl.bintray.com/typesafe/maven-releases" }
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'groovy'
+
+    sourceCompatibility = 1.9
+    targetCompatibility = 1.9
+
+    dependencies {
+        testCompile (
+                "org.spockframework:spock-core:${spock_version}"
+        )
+        testRuntime (
+                "cglib:cglib-nodep:${cglib_version}",           // allows mocking of classes (in addition to interfaces)
+                "org.objenesis:objenesis:${objenesis_version}"  // allows mocking of classes without default constructor (together with CGLIB)
+        )
+    }
+}
+
+def getProjectVersion() {
+    def release = project.hasProperty("project_release") ? project.project_release.toBoolean() : null
+    def rcno = project.hasProperty("project_rcno") ? project.project_rcno.toInteger() : null
+    def prjVer = "${project_version_major}.${project_version_minor}.${project_version_fix}"
+    if (release) {
+        return "${prjVer}-release"
+    } else if (rcno > 0) {
+        return "${prjVer}-rc${rcno}"
+    } else {
+        def timestampFormat = new java.text.SimpleDateFormat('yyyyMMddHHmmss')
+        timestampFormat.timeZone = TimeZone.getTimeZone("UTC")
+        def ts = timestampFormat.format(new Date())
+        return "${prjVer}-${ts}"
+    }
+}
